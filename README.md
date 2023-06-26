@@ -72,7 +72,7 @@ This file is dedicated to writing the equations for the electrode particles whic
   - Refer to `sld_dynamics_1D2var()` since this function follows a similar albeit, a simpler structure.
 - `sld_dynamics_1D2var()` - 
   - Extract number of grid pts (N) and the temperature (T) 
-  - Then the mass matrix for the Discrtized PDE system (Mmat: Mmat*dcdt = RHS) where RHS has the discretized flux terms and the reaction term is obtained using the get_Mmat function around  the end of the file. Also dicretization size dr and edges are obtained from the geometry module (geo).
+  - Then the mass matrix for the Discretized PDE system (Mmat: Mmat*dcdt = RHS) where RHS has the discretized flux terms and the reaction term is obtained using the get_Mmat function around  the end of the file. Also dicretization size dr and edges are obtained from the geometry module (geo).
   - Depending on the type of rxn model we might want to calculate the chemical potential only on the surface or at all grid pts. If it is only on surface (for diffn2, CHR2 models) the surface c1_surf, c2_surf and mu1R_surf, mu2R_surf are used with muO to obtain the overpotentials eta1 and eta2 and subquently obtain Rxn1 and Rxn2 terms.
   - On the other hand, if we have the ACR2 model the self.Rxn1 and self.Rxn2 terms will have to defined on a per grid point basis that is exactly what is done later on the for loop that sets the eq1.Residual and eq2.Residual for each reaction term
   - Next, solid particle fluxes and boundary conditions are populated into the RHS vector for "dffn2" and "CHR2" models. 
