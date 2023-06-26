@@ -50,3 +50,30 @@ This file is again dedicated to the creation of the ModCell class that encapsula
 - `DeclareEquations()` - 
   - The comment sin code are quite explanatory here but essentially a very standard format is used to declare equations by looping over the respective domain/region and using the `CreateEquation()` function to create an equation for the residual (that has to be zero) using the daeVariables defined earlier.
   - Aside from the standard MPET equations, some peculiar equations are also present for definite the output port variables namely `self.c_lyte, self.phi_lyte` using the portsOutlyte and `self.phi_part` using portsOutBulk. Note: These port variables were defined earlier in `_init_()` (see 3rd sub-bullet)
+
+ # mod_electrodes.py
+
+This file is dedicated to writing the equations for the electrode particles which can either be 1 var or 2 var type for each volume element with index vInd and particle index pInd.
+
+## class Mod2var(dae.daeModel)
+
+- `_init_()` - 
+  - First the init function from the dae.daeModel is called using super() then self.config, self.trode, self.ind which are config file, trode ID and tuple of volume and particle indices respectively are created. Domain withint he particle is declared as a dae discretization domain where the equations will be defined later. 
+  - Next, key variables are defined that include c1,c2,avg. c, avg. c1, avg. c2 and time derivative of avg. c. Additional variables for reaction namely Rxn1 and Rxn2 are defined for each region in particle. Finally, the reactiont type (rxnType) is read off from the config file and a function that can return the reaction rate is defined based on the rxnType this function is `self.calc_rxn_rate()`. This definition happens using the utils module that has the `import_function()` function.
+  - Finally, ports that were referred to in last bullet of the `_init_()` function in mod_cell.py are declared so that the particle model has access to the potential in lyte, conc. in lyte and potential in bulk. Additional variables including potential in electrolyte, conc. in electrolyte and potential solid are accordingly declared using the appropriate ports. 
+- `get_trode_param()` -  This is a utility function that helps get value of params in config file and will be used in the when the equations are defined in the next function
+- `DeclareEquations()` - 
+  - Starts with extracting the number of grid pts in the particle, the temperature and the discretization volume fraction vector 
+  - Next, if noise has to be added (based on config file), nose1 and noise2 are setup as the 1D interpolation of random normal noise of size numnoise (number of noise pts) and N (number of  grid pts). The noises are stored in a tuple.
+  - Two key parameters the chemical potential of the oxidized state (mu_O) and activity of lyte (act_lyte) are calculated using the function calc_mu_O function that can be found near the end of the file
+  - Next, 2 equations are setup for the defining the avg filling fraction in the particle and the definition of volume average is used to create a for loop for the residuals (eq1 and eq2). Overall avg. filling fraction is also similarly defined by setting eq.Residual.
+  - Two new numpy arrays c1 and c2 are created and the values of self.c1 and self.c2 are copied into it. These two arrays will be sent along with mu_O and act_lyte to the function(s) that set the governing equation in the particle phase.
+- `sld_dynamics_0D2var()` -
+  - Refer to `sld_dynamics_1D2var()` since this function follows a similar albeit, a simpler structure.
+- `sld_dynamics_1D2var()` - 
+  - Extract number of grid pts (N) and the temperature (T) 
+  - Then the mass matrix for the Discrtized PDE system (Mmat: Mmat*dcdt = RHS) where RHS has the discretized flux terms and the reaction term is obtained using the get_Mmat function around  the end of the file. Also dicretization size dr and edges are obtained from the geometry module (geo).
+  - Depending on the type of rxn model we might want to calculate the chemical potential only on the surface or at all grid pts. If it is only on surface (for diffn2, CHR2 models) the surface c1_surf, c2_surf and mu1R_surf, mu2R_surf are used with muO to obtain the overpotentials eta1 and eta2 and subquently obtain Rxn1 and Rxn2 terms.
+  - On the other hand, if we have the ACR2 model the self.Rxn1 and self.Rxn2 terms will have to defined on a per grid point basis that is exactly what is done later on the for loop that sets the eq1.Residual and eq2.Residual for each reaction term
+  - Next, solid particle fluxes and boundary conditions are populated into the RHS vector for "dffn2" and "CHR2" models. 
+  - The final 4 lines create and set the residual for the equations defining the concentration profile in the solid for both phase1 and 2 
