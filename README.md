@@ -51,7 +51,9 @@ This file is again dedicated to the creation of the ModCell class that encapsula
   - The comment sin code are quite explanatory here but essentially a very standard format is used to declare equations by looping over the respective domain/region and using the `CreateEquation()` function to create an equation for the residual (that has to be zero) using the daeVariables defined earlier.
   - Aside from the standard MPET equations, some peculiar equations are also present for definite the output port variables namely `self.c_lyte, self.phi_lyte` using the portsOutlyte and `self.phi_part` using portsOutBulk. Note: These port variables were defined earlier in `_init_()` (see 3rd sub-bullet)
 
- # mod_electrodes.py
+
+
+# mod_electrodes.py
 
 This file is dedicated to writing the equations for the electrode particles which can either be 1 var or 2 var type for each volume element with index vInd and particle index pInd.
 
@@ -72,8 +74,34 @@ This file is dedicated to writing the equations for the electrode particles whic
   - Refer to `sld_dynamics_1D2var()` since this function follows a similar albeit, a simpler structure.
 - `sld_dynamics_1D2var()` - 
   - Extract number of grid pts (N) and the temperature (T) 
-  - Then the mass matrix for the Discretized PDE system (Mmat: Mmat*dcdt = RHS) where RHS has the discretized flux terms and the reaction term is obtained using the get_Mmat function around  the end of the file. Also dicretization size dr and edges are obtained from the geometry module (geo).
+  - Then the mass matrix for the Discrtized PDE system (Mmat: Mmat*dcdt = RHS) where RHS has the discretized flux terms and the reaction term is obtained using the get_Mmat function around  the end of the file. Also dicretization size dr and edges are obtained from the geometry module (geo).
   - Depending on the type of rxn model we might want to calculate the chemical potential only on the surface or at all grid pts. If it is only on surface (for diffn2, CHR2 models) the surface c1_surf, c2_surf and mu1R_surf, mu2R_surf are used with muO to obtain the overpotentials eta1 and eta2 and subquently obtain Rxn1 and Rxn2 terms.
   - On the other hand, if we have the ACR2 model the self.Rxn1 and self.Rxn2 terms will have to defined on a per grid point basis that is exactly what is done later on the for loop that sets the eq1.Residual and eq2.Residual for each reaction term
   - Next, solid particle fluxes and boundary conditions are populated into the RHS vector for "dffn2" and "CHR2" models. 
   - The final 4 lines create and set the residual for the equations defining the concentration profile in the solid for both phase1 and 2 
+
+
+
+# utils.py
+
+This file contains utility functions that are useful throughout the codebase. Linear mean, Harmonic mean, Weighted Linear and Weighted Harmonic mean functions for a vector are first defined. A function for appending ghost points to a vector which was used in mod_cell.py. Other utility functions including get_asc_vec used in mod_cell.py and geometry.py for getting a full numpy array of variables spanning all domains are present. Most of these functions are self explanatory. The last function i.e `import_function(filename,function,...)` is specifically important for the reacrtion rate function, diffusivity function etc. that are material dependent and requires importing the appropriate function from the module that may be present in the mpet package. For example, in the mpet/electrode/materials folder there are several such named functions for chemical potential and activity in of Li in the active material.
+
+# props_am.py
+
+The entire file is dedicated to defining the class `muRfuncs()`. An object of this class essentially has the function that defines the chemical potential of Li in the electrode material. This function is imported using the `import_function()` in utils and is available for use in `calc_muR` function in mod_electrodes.py. Additional material specific helped functions are also defined within the scope of class `muRfuncs()` for example the 1 param graphite model (LiC6_1param.py in electrode/materials) requires `graphite_1param_homog_3()` function while LFP (electrode/materials/LiFePO4.py) requires `reg_sln()` function.
+
+# geometry.py
+
+Has 4 functions namely `get_unit_solid_discr` for getting grid pts and volfrac for the discretized grid in a given shape of solid active particle, `get_dr_edges` to obtain the edge length for area calculation in mod_electrodes.py, `calc_curv` for curvature calculation that is used in certain nonhomgeneous terms in chemical potential of Li in active material and `get_elyte_disc` for linear discretization of the electrolyte phase (this function returns a dictionary). 
+
+# daeVariableTypes.py
+
+Defined the 3 key daeVariable types i.e. concentration, potential and mole fraction.
+
+# data_reporting.py
+
+This is for writing simulation output. For brevity we will only go over `MyMATDataReporter()` class that has a single function `WriteDataToFile` that starts with an empty dict of data that is populated according to `continued_sim` boolean that is set to 1 if we are continuing a previous simulation. Then for each process variable (except for the port variables) a for loop is run where `mdict	` is populated with new data then the `mdict[dkeybase]` value is written into `mat_dat` that lives in the hdf5 file. The only nuance here is that depending on if the `continued_sim` is true additional space needs to be created in `mat_dat` that is done using resize function calls and subsequently assigning the data in `mdict[dkeybased]` to the newly created space. If `continued_sim` is false, fresh space is created using `create_dataset()` function within the object `mat_dat`. 
+
+# Concluding Remarks
+
+`**This section is still in development**`
