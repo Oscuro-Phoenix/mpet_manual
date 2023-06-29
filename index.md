@@ -16,7 +16,7 @@ This is the key function that takes in a configuration file (`config`) and an ou
 
 ## `main(paramfile)`   
 
-This is the main function that set the start time, parses the paramfile into a config object made using `Config()` that is a function in configuration.py in the config folder. Then, the output directory is verified (that it exists) and the paramfile is copied into a file named `input_params_system.cfg`. Also by looping over all the electrodes in the system new `.cfg` files for each trode is populated with information from the paramfile through `config` object. Finally, `config.write()` creates another file that has all the paramteric info about the system (look into write function in configuration.py).
+This is the main function that set the start time, parses the paramfile into a config object made using `Config()` that is a function in configuration.py in the config folder. Then, the output directory is verified (that it exists) and the paramfile is copied into a file named `input_params_system.cfg`. Also by looping over all the electrodes in the system new `.cfg` files for each trode is populated with information from the paramfile through `config` object. Finally, `config.write()` creates another file that has all the parametric info about the system (look into write function in configuration.py).
 
 Next, the main function checks if there is any git commit info, prints the mpet version, prints git commit info if it was found to exist and this "printing" takes place into a file named `run_info.txt` through the object `fo`. In case the simulation is not a simple galvanostatic simulation with segments of constant current/voltage, the DAETools evaluation tree approach is activated. 
 
