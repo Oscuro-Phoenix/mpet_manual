@@ -1,5 +1,7 @@
 # MPET Walkthrough
 
+This is a file-by-file walkthrough of MPET codebase developed and maintained by the Bazant Group. The theoretical equations behind the codebase are outlined in this [paper](https://iopscience.iop.org/article/10.1149/2.0171711jes) by Smith and Bazant. The manual should be used alongside with the codebase after a decent understanding of the theory has been established. 
+
 # main.py
 
 ## `run_simulation(config,outdir)` 
@@ -7,7 +9,7 @@
 This is the key function that takes in a configuration file (`config`) and an output directory (`outdir`) to run the simulation. It heavily relies on all the other files (particularly `mod_cell.py` and `sim.py`) in the codebase to setup the multi-scale system of equations that need to be solved.
 
 1. Get the timescale from config
-2. Declare variable for logging data as `log`, declare the solver as `daesolver` , create a simulation object that will be used to initialize and run the simulation `simulation`  and declare a `datareporter`
+2. Declare variable for logging data as `log`, declare the solver as `daesolver` , create a simulation object that will be used to initialize and run the simulation `simulation`  and declare a `datareporter`(see [User Guide](https://daetools.sourceforge.io/docs/pyDAE_user_guide.html)).
 3. Assign the solver as an LU decomposition sparse solver that is imported from pySuperLU
 4. Enable data reporting for all variables except particle and cell ports -- this reporting is set using the datareporting function on `simulation.m` where m refers to the model of the cell that is defined in `mod_cell.py` and is a daeModel (see Line 29 in mod_cell.py).
 5. Initialise simulation using solver, reporter and logger using `simulation.initializer()` with appropriate arguments
@@ -20,7 +22,7 @@ This is the main function that set the start time, parses the paramfile into a c
 
 Next, the main function checks if there is any git commit info, prints the mpet version, prints git commit info if it was found to exist and this "printing" takes place into a file named `run_info.txt` through the object `fo`. In case the simulation is not a simple galvanostatic simulation with segments of constant current/voltage, the DAETools evaluation tree approach is activated. 
 
-Finally, using the `run_simulation()` function the simulaiton is run, The total time taken is printed.  `shutil` is a python library for copying and archiving files and can be used to move the simulation output around.
+Finally, using the `run_simulation()` function the simulaiton is run, The total time taken is printed.  `shutil` [see [shutil](https://docs.python.org/3/library/shutil.html)] is a python library for copying and archiving files and can be used to move the simulation output around.
 
 # sim.py
 
@@ -34,7 +36,7 @@ The entire file is dedicated to creating this class. Below is a summary of each 
   - For each trode the avg. filling fraction (`ffrac`) is set to an initial guess. Following this, the volumetric reaction rate R_Vp for each control volume (Nvol) is set to zero as initial guess.  Potential in the solid phase (`phi_bulk`) is set to reference voltage for anode and a voltage for cathode that comes from the config file. Another for loop over j the number of particles in each trode sets the initial concentration as constant (`cs0`) for each particle for type j in control volume i.
   - The potential applied to the cell is initialized based on the type of run (for example if it is a constant voltage run then it comes from `config['Vset']`. If it is not a single volume simulation (`SVsim`) , additional ghost points for discretization in concentration and potential in electrolyte (lyte) are needed and are accordingly set.
   - Finally, the concentration and potential at all other points in the lyte are initialized with an initial guess based on the config file. Additionally, the concentration of electrolyte that interacts with each particle is also set to an intial value `config["c0"]`.  
-- `Run(self)` -  There is already a run function that came with the fact that `SimMPET` inherits `dae.daeSImulation` but this function is overloaded with this function that prints simulation progress, integrates the DAE system and keeps checking if an end conditions is reached to stop the simulation. which happens when any of the `self.m.endCondition.npyValues` are nonzero.
+- `Run(self)` -  There is already a run function that came with the fact that `SimMPET` inherits `dae.daeSImulation` (see [daeSimulation](https://daetools.sourceforge.io/docs/getting_started.html#simulation)) but this function is overloaded with this function that prints simulation progress, integrates the DAE system and keeps checking if an end conditions is reached to stop the simulation. which happens when any of the `self.m.endCondition.npyValues` are nonzero.
 
 # mod_cell.py
 
@@ -48,7 +50,7 @@ This file is again dedicated to the creation of the ModCell class that encapsula
   - Key simulation variables are defined namely `c_lyte, phi_lyte, phi_bulk, phi_part, Rvp` and `ffrac` . The `daeVariable` function is used to appropriately define the type of variable (either conc_t or elec_pot_t -- see daeVariableTypes.py for more info) and the domain where the variable lives. 
   - Next, if the simulation is not a single variable sim (`SVsim`) then additional ghost point variables are defined. These are again set in sim.py as discussed earlier.
   - Additional variables that are macroscale like `phi_applied`,`phi_cell`, `current` and `endCondition` are defined again using the `daeVariable` function.
-  - Ports are setup to help the particles "talk" to the lyte and bulk phases. Essentially, portsOutlyte represent outlet ports that go from lye to trode particles. Similarly, portsOutBulk represent outlet ports that go from bulk to trode particles. This section starts off by setting up empty numpy arrays for the ports which are then populated using the ports module that is imported in the beginning of the code. The particle model is also set here as either being 1variable or 2variable type particle (particle models are setup in mod_electrodes.py). Finally, the ports are connected to the particles (using `ConnectPorts()` function that is inherited from `dae.daeModel`) which already have daeInlet ports that were defined within mod_electrode.py. All of this is being done to ensure that the particle model has locally access to the lye concentration, lyte potential and bulk potential.
+  - Ports are setup to help the particles "talk" to the lyte and bulk phases. Essentially, portsOutlyte represent outlet ports that go from lye to trode particles. Similarly, portsOutBulk represent outlet ports that go from bulk to trode particles. This section starts off by setting up empty numpy arrays for the ports which are then populated using the ports module that is imported in the beginning of the code. The particle model is also set here as either being 1variable or 2variable type particle (particle models are setup in mod_electrodes.py). Finally, the ports are connected to the particles (using `ConnectPorts()` function that is inherited from `dae.daeModel`) (see [daeModel](https://daetools.sourceforge.io/docs/getting_started.html#models)) which already have daeInlet ports that were defined within mod_electrode.py. All of this is being done to ensure that the particle model has locally access to the lye concentration, lyte potential and bulk potential.
 - `DeclareEquations()` - 
   - The comment sin code are quite explanatory here but essentially a very standard format is used to declare equations by looping over the respective domain/region and using the `CreateEquation()` function to create an equation for the residual (that has to be zero) using the daeVariables defined earlier.
   - Aside from the standard MPET equations, some peculiar equations are also present for definite the output port variables namely `self.c_lyte, self.phi_lyte` using the portsOutlyte and `self.phi_part` using portsOutBulk. Note: These port variables were defined earlier in `_init_()` (see 3rd sub-bullet)
@@ -73,15 +75,14 @@ This file is dedicated to writing the equations for the electrode particles whic
   - Next, 2 equations are setup for the defining the avg filling fraction in the particle and the definition of volume average is used to create a for loop for the residuals (eq1 and eq2). Overall avg. filling fraction is also similarly defined by setting eq.Residual.
   - Two new numpy arrays c1 and c2 are created and the values of self.c1 and self.c2 are copied into it. These two arrays will be sent along with mu_O and act_lyte to the function(s) that set the governing equation in the particle phase.
 - `sld_dynamics_0D2var()` -
-  - Refer to `sld_dynamics_1D2var()` since this function follows a similar albeit, a simpler structure.
+  - Refer to `sld_dynamics_1D2var()` below since this function follows a similar albeit, a simpler structure.
 - `sld_dynamics_1D2var()` - 
   - Extract number of grid pts (N) and the temperature (T) 
-  - Then the mass matrix for the Discrtized PDE system (Mmat: Mmat*dcdt = RHS) where RHS has the discretized flux terms and the reaction term is obtained using the get_Mmat function around  the end of the file. Also dicretization size dr and edges are obtained from the geometry module (geo).
+  - Then the mass matrix for the Discretized PDE system (Mmat: Mmat*dcdt = RHS) where RHS has the discretized flux terms and the reaction term is obtained using the get_Mmat function around  the end of the file. Also dicretization size 'dr' and edges are obtained from the geometry module (geo).
   - Depending on the type of rxn model we might want to calculate the chemical potential only on the surface or at all grid pts. If it is only on surface (for diffn2, CHR2 models) the surface c1_surf, c2_surf and mu1R_surf, mu2R_surf are used with muO to obtain the overpotentials eta1 and eta2 and subquently obtain Rxn1 and Rxn2 terms.
   - On the other hand, if we have the ACR2 model the self.Rxn1 and self.Rxn2 terms will have to defined on a per grid point basis that is exactly what is done later on the for loop that sets the eq1.Residual and eq2.Residual for each reaction term
   - Next, solid particle fluxes and boundary conditions are populated into the RHS vector for "dffn2" and "CHR2" models. 
   - The final 4 lines create and set the residual for the equations defining the concentration profile in the solid for both phase1 and 2 
-
 
 
 # utils.py
