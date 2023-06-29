@@ -1,6 +1,6 @@
 # MPET Walkthrough
 
-This is a file-by-file walkthrough of MPET codebase developed and maintained by the Bazant Group. The theoretical equations behind the codebase are outlined in this [paper](https://iopscience.iop.org/article/10.1149/2.0171711jes) by Smith and Bazant. The manual should be used alongside with the codebase after a decent understanding of the theory has been established. 
+This is a file-by-file walkthrough of MPET codebase developed and maintained by the Bazant Group. The theoretical equations behind the codebase are outlined in this [paper](https://iopscience.iop.org/article/10.1149/2.0171711jes) by Smith and Bazant. The manual should be used alongside the codebase after a decent understanding of the theory has been established. 
 
 # main.py
 
