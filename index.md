@@ -2,6 +2,84 @@
 
 This is a file-by-file walkthrough of MPET codebase developed and maintained by the Bazant Group. The theoretical equations behind the codebase are outlined in this [paper](https://iopscience.iop.org/article/10.1149/2.0171711jes) by Smith and Bazant. The manual should be used alongside the codebase after a decent understanding of the theory has been established. 
 
+# MPET Installation Instructions
+
+## Dual Booting Linux on a Windows System
+
+We recommend dual booting with Linux on a Windows system. Follow these steps to set up dual boot:
+
+1. **Download Ubuntu LTS Release:**
+   - Visit [Ubuntu Releases](https://wiki.ubuntu.com/Releases) to download one of the LTS release images.
+
+2. **Create a Bootable USB Drive:**
+   - Format a USB drive with at least 4 GB of space.
+   - Use [Rufus](https://rufus.ie/en/) to mount the Ubuntu image onto the USB drive.
+
+3. **Install Ubuntu:**
+   - Insert the bootable USB into your computer and restart it to enter the bootloader menu.
+   - Follow the instructions to install Ubuntu alongside Windows. Ensure that BitLocker Encryption is disabled.
+
+## Installing Conda
+
+1. **Download Conda:**
+   - Visit [Anaconda Repository](https://repo.anaconda.com/archive/) and download the latest Conda installer for Linux (a .sh file).
+
+2. **Install Conda:**
+   - Run the following command to install Conda:
+     ```bash
+     bash ~/Downloads/Anaconda3-<INSTALLER_VERSION>-Linux-x86_64.sh
+     ```
+     *Assumes the installer is in the Downloads folder.*
+
+## Updating apt
+
+- Run the following command to update apt:
+  ```bash
+  sudo apt-get update
+  ```
+
+## Creating a Virtual Environment
+
+1. **Create Virtual Environment:**
+   - Create a virtual environment named `mpet_v1`:
+     ```bash
+     conda create -n mpet_v1 -c conda-forge daetools
+     ```
+   - *This command will download a newer version of DAETools. For an older version, contact shakulp@mit.edu.*
+
+## Setting Up GitHub
+
+1. **Install GitHub CLI:**
+   - Visit [GitHub CLI](https://github.com/cli/cli) to set up the GitHub CLI (`gh`).
+
+## Cloning and Installing MPET
+
+1. **Clone MPET Repository:**
+   - Visit the [MPET GitHub Repository](https://github.com/TRI-AMDD/mpet).
+   - Assuming you have access to the repository, use the following command to clone your preferred branch:
+     ```bash
+     gh repo clone TRI-AMDD/mpet -- --branch branch_name
+     ```
+
+2. **Activate Virtual Environment:**
+   - Activate the virtual environment:
+     ```bash
+     conda activate mpet_v1
+     ```
+
+3. **Install MPET Package:**
+   - Run the following command to install the MPET package:
+     ```bash
+     pip install -e .
+     ```
+
+## Checking the Installation
+
+- Verify the installation by running:
+  ```bash
+  python ./bin/mpetrun.py ./configs/params_system.cfg
+  ```
+
 # main.py
 
 ## `run_simulation(config,outdir)` 
